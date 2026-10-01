@@ -1,4 +1,4 @@
-# syntax = ghcr.io/siderolabs/bldr:v0.6.3
+# syntax = ghcr.io/siderolabs/bldr:v0.6.4
 
 # Sync bldr image with Makefile
 
@@ -10,7 +10,7 @@ vars:
   LLVM_IMAGE: ghcr.io/siderolabs/llvm:v1.15.0-alpha.0-9-g19bb4b7
 
   # renovate: datasource=github-tags depName=rust-lang/rust
-  rust_version: 1.97.1
+  rust_version: 1.99.0
   rust_sha256: 622c2b429c53cbfdc0dd3a51d03554e91cd63ebec1912c1f5709640cdfef1a9d
   rust_sha512: 71813f2ee84087a197ca648f16a588b5c6727752a0d42547991ac9504301e2e14a1fa5b42102a01e3c67884fee6773ad855ac4a77e9f0d0e1e22b18cd0748cc0
 
