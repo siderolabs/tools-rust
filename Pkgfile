@@ -1,4 +1,4 @@
-# syntax = ghcr.io/siderolabs/bldr:v0.6.3
+# syntax = ghcr.io/siderolabs/bldr:v0.6.4
 
 # Sync bldr image with Makefile
 
@@ -6,20 +6,20 @@ format: v1alpha2
 
 vars:
   TOOLCHAIN_IMAGE: ghcr.io/siderolabs/toolchain:v1.15.0-alpha.0-7-g078a2d6
-  TOOLS_IMAGE: ghcr.io/siderolabs/tools:v1.15.0-alpha.0-9-g19bb4b7
-  LLVM_IMAGE: ghcr.io/siderolabs/llvm:v1.15.0-alpha.0-9-g19bb4b7
+  TOOLS_IMAGE: ghcr.io/siderolabs/tools:v1.15.0-alpha.0-13-ge952d34
+  LLVM_IMAGE: ghcr.io/siderolabs/llvm:v1.15.0-alpha.0-13-ge952d34
+  BOOTSTRAP_RUST_IMAGE: ghcr.io/siderolabs/rustc:v1.15.0-alpha.0-1-g95a2514
+  BOOTSTRAP_LLVM_IMAGE: ghcr.io/siderolabs/llvm:v1.15.0-alpha.0-12-g32e115c
 
   # renovate: datasource=github-tags depName=rust-lang/rust
-  rust_version: 1.97.1
-  rust_sha256: 622c2b429c53cbfdc0dd3a51d03554e91cd63ebec1912c1f5709640cdfef1a9d
-  rust_sha512: 71813f2ee84087a197ca648f16a588b5c6727752a0d42547991ac9504301e2e14a1fa5b42102a01e3c67884fee6773ad855ac4a77e9f0d0e1e22b18cd0748cc0
+  rust_version: 1.99.0
+  rust_sha256: 2035e4077b834a42ff8afd07f277ae3f06340098b86b1d2843aa234b4cfcae67
+  rust_sha512: 5f6ae9b038138a486dbaf824eee620724e8cf267da1f6c8e6d289c11d70eeb694b8950da7b6d4744367eca8327ab0938ee72e5bcbe0c1f1840a924039e6fe130
 
-  # Stage(x) reproducibly built bootstrap toolchain. Please update when necessary to build newer toolchain
-  stagex_prefix: ghcr.io/siderolabs/stagex
-  stagex_version: 2026.06.0
-  stagex_rust_sha256: f1fbd09e2132ce721fe4459320ee01e9050eff4f0feec8bdd307f4009e3ff78c
-  stagex_llvm_sha256: 919f0f459d3c9c5d85b7a45524d9fa056976ea8026441edc6419342a1f6a9ef1
-  stagex_llvm21_sha256: 5bae8a803b18c6d8c8e60a4c3760bfc4d3fc8bbab59e048d3d6400a8179a3b70
-  stagex_libzstd_sha256: c505998e9ee9c33dee1b25500378ba6b399f155b79570abed0271aa7573ba12b
+  # Intermediate source build required by Rust 1.99's N-1 bootstrap check.
+  # The bootstrap image retains the StageX source bootstrap chain at 95a2514.
+  bootstrap_rust_version: 1.98.1
+  bootstrap_rust_sha256: dc9f8b917b32444d6c7ac43cc1b409013d3a9a633338bb60c14cdae1d15ee65a
+  bootstrap_rust_sha512: 854306cafab560a99f617244b885dd43f02830019ce19d567478fbc94241612a70cb208629604fc16d7f307f02213729105ca17a42ff64eb72bfbcdce2f53e75
 labels:
   org.opencontainers.image.source: https://github.com/siderolabs/tools-rust

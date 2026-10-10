@@ -1,0 +1,72 @@
+name: rustc-bootstrap
+variant: scratch
+# Rust 1.99 requires a 1.98 seed. Build it natively from our StageX-derived
+# source-built Rust 1.97 image, using LLVM 22 (1.98 does not support LLVM 23).
+buildPlatform: linux/amd64
+dependencies:
+  - image: "{{ .TOOLS_IMAGE }}"
+  - image: "{{ .BOOTSTRAP_LLVM_IMAGE }}"
+  - image: "{{ .BOOTSTRAP_RUST_IMAGE }}"
+    to: /bootstrap
+steps:
+  - sources:
+      - url: https://static.rust-lang.org/dist/rustc-{{ .bootstrap_rust_version }}-src.tar.gz
+        destination: rustc-src.tar.gz
+        sha256: "{{ .bootstrap_rust_sha256 }}"
+        sha512: "{{ .bootstrap_rust_sha512 }}"
+    prepare:
+      - |
+        mkdir -p rust
+        tar -xf rustc-src.tar.gz -C rust --strip-components=1
+        /bootstrap/usr/bin/rustc -vV
+        /bootstrap/usr/bin/cargo --version
+        llvm-config --version
+        cat > rust/bootstrap.toml <<'EOF'
+        [build]
+        build = "x86_64-unknown-linux-musl"
+        host = ["x86_64-unknown-linux-musl"]
+        target = ["x86_64-unknown-linux-musl"]
+        rustc = "/bootstrap/usr/bin/rustc"
+        cargo = "/bootstrap/usr/bin/cargo"
+        local-rebuild = false
+        docs = false
+        vendor = true
+        extended = true
+        tools = ["cargo"]
+        [install]
+        prefix = "/usr"
+        sysconfdir = "/etc"
+        [rust]
+        channel = "stable"
+        lld = false
+        llvm-tools = false
+        [llvm]
+        link-shared = true
+        [target.x86_64-unknown-linux-musl]
+        llvm-config = "/usr/bin/llvm-config"
+        cc = "clang"
+        cxx = "clang++"
+        ar = "llvm-ar"
+        ranlib = "llvm-ranlib"
+        linker = "clang"
+        musl-root = "/usr"
+        crt-static = false
+        EOF
+    install:
+      - |
+        cd rust
+        export RUSTFLAGS="-C target-feature=-crt-static"
+        export CARGO_NET_OFFLINE=true
+        export OPENSSL_NO_VENDOR=1
+        export X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR=/usr
+        DESTDIR=/rootfs python3 x.py install --stage 2
+    test:
+      - |
+        /rootfs/usr/bin/rustc -vV
+        /rootfs/usr/bin/cargo --version
+        printf 'fn main() { println!("bootstrap smoke ok"); }\n' > /tmp/smoke.rs
+        /rootfs/usr/bin/rustc -C linker=clang /tmp/smoke.rs -o /tmp/smoke
+        /tmp/smoke
+finalize:
+  - from: /rootfs
+    to: /

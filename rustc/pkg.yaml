@@ -1,6 +1,6 @@
 name: rustc
 variant: scratch
-# Bootstrap rust from the stagex amd64 rustc and (cross-)build the host rustc.
+# Bootstrap rust from the source-built Sidero amd64 rustc and (cross-)build the host rustc.
 # mrustc can't bootstrap rust on arm64, so the build is pinned to amd64 and the
 # arm64-host rustc is cross-built here (x.py --build x86_64 --host aarch64).
 buildPlatform: linux/amd64
@@ -11,23 +11,17 @@ dependencies:
   # cross-compile to aarch64.)
   - image: "{{ .TOOLS_IMAGE }}"
   - image: "{{ .LLVM_IMAGE }}"
-  # stage0 bootstrap compiler: stagex's reproducibly-built amd64 rustc.
-  - image: "{{ .stagex_prefix }}/core-rust:{{ .stagex_version }}@sha256:{{ .stagex_rust_sha256 }}"
+  # Source-built Rust/Cargo 1.98.1, retaining the StageX-derived bootstrap chain.
+  - stage: rustc-bootstrap
+    platform: linux/amd64
     to: /bootstrap
-  # The stagex rustc/cargo are not self-contained: they dynamically link the
-  # LLVM C++ runtime (libc++/libc++abi/libunwind) and libzstd. Pull the stagex
-  # images that ship those to a non-loader path; prepare copies just the needed
-  # .so into the bootstrap's lib dir (resolved via its $ORIGIN/../lib rpath).
-  - image: "{{ .stagex_prefix }}/core-llvm:{{ .stagex_version }}@sha256:{{ .stagex_llvm_sha256 }}"
+  # Keep the seed's LLVM 22 runtime away from the LLVM 23 build/output libs.
+  - image: "{{ .BOOTSTRAP_LLVM_IMAGE }}"
     to: /runtime/llvm
-  - image: "{{ .stagex_prefix }}/core-llvm21:{{ .stagex_version }}@sha256:{{ .stagex_llvm21_sha256 }}"
-    to: /runtime/llvm21
-  - image: "{{ .stagex_prefix }}/core-libzstd:{{ .stagex_version }}@sha256:{{ .stagex_libzstd_sha256 }}"
-    to: /runtime/libzstd
   # arm64 cross inputs (used only when the target platform is arm64; the build
   # itself always runs on amd64 via buildPlatform). aarch64 musl sysroot for
   # cross-linking, and the aarch64 LLVM to link the arm64-host rustc against
-  # (its llvm-config runs under buildx qemu).
+  # (llvm-config is represented by the native cross-target shim).
   - image: "{{ .TOOLCHAIN_IMAGE }}"
     platform: linux/arm64
     to: /sysroots/aarch64
@@ -52,26 +46,12 @@ steps:
         mkdir -p rust
         tar -xf rustc-src.tar.gz -C rust --strip-components=1
 
-        # Make the stage0 bootstrap compiler self-contained: drop the LLVM C++
-        # runtime + libzstd it links next to its binaries (its rpath is
-        # $ORIGIN/../lib). libz/libssl come from tools-zlib-ng/tools-openssl.
-        cp -a /runtime/llvm/usr/lib/libc++.so.1* /bootstrap/usr/lib/
-        cp -a /runtime/llvm/usr/lib/libc++abi.so.1* /bootstrap/usr/lib/
-        cp -a /runtime/llvm21/usr/lib/llvm21/lib/libunwind.so.1* /bootstrap/usr/lib/
-        cp -a /runtime/libzstd/usr/lib/libzstd.so.1* /bootstrap/usr/lib/
-
-        # stagex's std was built with --llvm-libunwind=system, so every binary
-        # the stage0 links pulls in `-lunwind`; put libunwind.so (+ soname) on
-        # the system linker path so ld resolves it. Our own std bundles libunwind
-        # (rust's musl default), so this only affects stage0-linked binaries.
-        cp -a /runtime/llvm21/usr/lib/llvm21/lib/libunwind.so* /usr/lib/
-
-        # stagex's rust install has a real `lib` dir with `lib64 -> lib`. rustc's
-        # find_libdir prefers `lib64` on 64-bit, so bootstrap's stage0-sysroot
-        # ends up with std in `lib` but an empty real `lib64` that rustc searches
-        # first ("can't find crate for core"). Drop the lib64 symlink so both the
-        # stage0 and bootstrap's sysroot use `lib`.
-        rm -f /bootstrap/usr/lib64
+        # Retain every shared library from the seed's LLVM image, resolving via
+        # the seed's $ORIGIN/../lib rpath, never via the output's /usr/lib.
+        cp -a /runtime/llvm/usr/lib/*.so* /bootstrap/usr/lib/
+        /bootstrap/usr/bin/rustc -vV
+        /bootstrap/usr/bin/cargo --version
+        llvm-config --version
 
         # Cross wrappers for the aarch64 host build (unused on amd64).
         install -m0755 /pkg/aarch64-clang /usr/bin/aarch64-clang
@@ -87,7 +67,8 @@ steps:
         # dynamically-linked musl (matches stagex), reuse system openssl/llvm.
         export RUSTFLAGS="-C target-feature=-crt-static"
         export CARGO_NET_OFFLINE=true
-        export LD_LIBRARY_PATH=/bootstrap/usr/lib
+        # The seed resolves LLVM 22 through its private rpath, not a global
+        # loader override inherited by LLVM 23 tools or stage1/stage2.
 
         # cargo's openssl-sys links the system openssl per target. Use
         # target-scoped OPENSSL_DIRs so the aarch64 link picks the aarch64 openssl
@@ -100,7 +81,7 @@ steps:
         # Always stage2. For the aarch64 cross-host build this matters: the
         # aarch64 compiler must be built by the stage1 *x86_64* compiler (which
         # also builds the aarch64 std, so it can find it), not by stage0 (the
-        # stagex bootstrap, which only has x86_64 std). stage1 runs on amd64 and
+        # native bootstrap, which only has x86_64 std). stage1 runs on amd64 and
         # cross-compiles rustc to aarch64 — no aarch64 binary is executed here.
         # x.py install builds then installs, so a single invocation covers both.
         DESTDIR=/rootfs python3 x.py install --stage 2
@@ -117,7 +98,11 @@ steps:
         sys.exit(0 if data[18:20] == want else 1)
         PY
         if [ "${ARCH}" != "aarch64" ]; then
-          /rootfs/usr/bin/rustc --version
+          /rootfs/usr/bin/rustc -vV
+          /rootfs/usr/bin/cargo --version
+          printf 'fn main() { println!("llvm23 smoke ok"); }\n' > /tmp/smoke.rs
+          /rootfs/usr/bin/rustc -C linker=clang /tmp/smoke.rs -o /tmp/smoke
+          /tmp/smoke
         fi
 finalize:
   - from: /rootfs

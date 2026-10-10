@@ -18,10 +18,9 @@ host = ["${RUST_TARGET}"]
 target = ["${RUST_TARGET}"]
 rustc = "/bootstrap/usr/bin/rustc"
 cargo = "/bootstrap/usr/bin/cargo"
-# The stage0 (stagex) rustc is not the exact version src/stage0 expects, so tell
-# bootstrap to treat it as a local rebuild (use its std/sysroot directly rather
-# than a freshly-built stage1 std).
-local-rebuild = true
+# This is the previous release's source-built compiler, not an in-tree rebuild.
+# Keep stage0 bootstrap cfg/features enabled for the N-1 seed.
+local-rebuild = false
 docs = false
 vendor = true
 extended = true
@@ -59,7 +58,7 @@ EOF
 
 if [ "${ARCH}" = "aarch64" ]; then
 	# Cross target: aarch64 host, linked against the prebuilt arm64 libLLVM (its
-	# llvm-config runs under buildx qemu), compiled/linked with the multi-target
+	# llvm-config is represented by the native shim), compiled/linked with the multi-target
 	# clang via wrappers that add --target/--sysroot.
 	cat <<EOF
 
