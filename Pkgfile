@@ -13,7 +13,7 @@ vars:
   BOOTSTRAP_TOOLS_IMAGE: ghcr.io/siderolabs/tools:v1.15.0-alpha.0-12-g32e115c
 
   # renovate: datasource=github-tags depName=rust-lang/rust
-  rust_version: 1.99.0
+  rust_version: 1.99.1
   rust_sha256: 2035e4077b834a42ff8afd07f277ae3f06340098b86b1d2843aa234b4cfcae67
   rust_sha512: 5f6ae9b038138a486dbaf824eee620724e8cf267da1f6c8e6d289c11d70eeb694b8950da7b6d4744367eca8327ab0938ee72e5bcbe0c1f1840a924039e6fe130
 
