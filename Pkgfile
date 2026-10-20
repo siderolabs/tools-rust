@@ -1,13 +1,13 @@
-# syntax = ghcr.io/siderolabs/bldr:v0.6.4
+# syntax = ghcr.io/siderolabs/bldr:v0.6.5
 
 # Sync bldr image with Makefile
 
 format: v1alpha2
 
 vars:
-  TOOLCHAIN_IMAGE: ghcr.io/siderolabs/toolchain:v1.15.0-alpha.0-7-g078a2d6
-  TOOLS_IMAGE: ghcr.io/siderolabs/tools:v1.15.0-alpha.0-13-ge952d34
-  LLVM_IMAGE: ghcr.io/siderolabs/llvm:v1.15.0-alpha.0-13-ge952d34
+  TOOLCHAIN_IMAGE: ghcr.io/siderolabs/toolchain:v1.15.0-alpha.0-9-ge36d7e7
+  TOOLS_IMAGE: ghcr.io/siderolabs/tools:v1.15.0-alpha.0-14-g151acc5
+  LLVM_IMAGE: ghcr.io/siderolabs/llvm:v1.15.0-alpha.0-14-g151acc5
   BOOTSTRAP_RUST_IMAGE: ghcr.io/siderolabs/rustc:v1.15.0-alpha.0-1-g95a2514
   BOOTSTRAP_LLVM_IMAGE: ghcr.io/siderolabs/llvm:v1.15.0-alpha.0-12-g32e115c
 
