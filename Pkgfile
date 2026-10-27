@@ -5,17 +5,17 @@
 format: v1alpha2
 
 vars:
-  TOOLCHAIN_IMAGE: ghcr.io/siderolabs/toolchain:v1.15.0-alpha.0-9-ge36d7e7
-  TOOLS_IMAGE: ghcr.io/siderolabs/tools:v1.15.0-alpha.0-14-g151acc5
-  LLVM_IMAGE: ghcr.io/siderolabs/llvm:v1.15.0-alpha.0-14-g151acc5
+  TOOLCHAIN_IMAGE: ghcr.io/siderolabs/toolchain:v1.15.0-alpha.0-12-g0f41276
+  TOOLS_IMAGE: ghcr.io/siderolabs/tools:v1.15.0-alpha.0-16-g54f72f9
+  LLVM_IMAGE: ghcr.io/siderolabs/llvm:v1.15.0-alpha.0-16-g54f72f9
   BOOTSTRAP_RUST_IMAGE: ghcr.io/siderolabs/rustc:v1.15.0-alpha.0-1-g95a2514
   BOOTSTRAP_LLVM_IMAGE: ghcr.io/siderolabs/llvm:v1.15.0-alpha.0-12-g32e115c
   BOOTSTRAP_TOOLS_IMAGE: ghcr.io/siderolabs/tools:v1.15.0-alpha.0-12-g32e115c
 
   # renovate: datasource=github-tags depName=rust-lang/rust
-  rust_version: 1.99.0
-  rust_sha256: 2035e4077b834a42ff8afd07f277ae3f06340098b86b1d2843aa234b4cfcae67
-  rust_sha512: 5f6ae9b038138a486dbaf824eee620724e8cf267da1f6c8e6d289c11d70eeb694b8950da7b6d4744367eca8327ab0938ee72e5bcbe0c1f1840a924039e6fe130
+  rust_version: 1.99.1
+  rust_sha256: db56bbc64db491ceda6b78a2811a6d121c639338906fd944f720289cbd02245c
+  rust_sha512: 4c7755ba6c414a41d59d7bad8990b12eda9c36a40b4f0d056322d7da2a233f1f4abdf37118aa4113cedefb66c30502ea790a3a6cb6ab485e14de2febeb203a24
 
   # Intermediate source build required by Rust 1.99's N-1 bootstrap check.
   # The bootstrap image retains the StageX source bootstrap chain at 95a2514.
